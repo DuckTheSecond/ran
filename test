@@ -259,9 +259,9 @@ end
 
 -- Trigger the effect with a delay
 task.delay(startupDelay, playEffect)
-
 local ts = game:GetService("TweenService")
 local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -313,31 +313,6 @@ local function displayBillboardEffect()
     idk2.BackgroundTransparency = 1
     idk2.Parent = Aztech
 
-    local AztechTeam = Instance.new("Frame")
-    AztechTeam.AnchorPoint = Vector2.new(0.16, 0.55)
-    AztechTeam.BackgroundColor3 = Color3.new(1, 1, 1)
-    AztechTeam.BorderColor3 = Color3.new(0, 0, 0)
-    AztechTeam.BorderSizePixel = 2
-    AztechTeam.Position = UDim2.new(0.5, 0, 0.5, 0)
-    AztechTeam.Size = UDim2.new(0.1, 0, 0.2, 0)
-    AztechTeam.Name = "AztechTeam"
-    AztechTeam.BackgroundTransparency = 1
-    AztechTeam.Parent = birdass
-
-    local idk = Instance.new("TextLabel")
-    idk.FontFace = Font.new("rbxassetid://12187375716", Enum.FontWeight.Bold, Enum.FontStyle.Italic)
-    idk.Text = "And his overwhelming intensity"
-    idk.TextColor3 = Color3.new(0, 0, 0)
-    idk.TextScaled = true
-    idk.TextWrapped = true
-    idk.AnchorPoint = Vector2.new(0.5, 0.5)
-    idk.Position = UDim2.new(0.5, 0, 0.5, 0)
-    idk.Size = UDim2.new(0.85, 0, 0.5, 0)
-    idk.Name = "idk"
-    idk.TextTransparency = 1
-    idk.BackgroundTransparency = 1
-    idk.Parent = AztechTeam
-
     local fadeInDuration = 0.6
     local fadeOutDuration = 5
     local waitTime = 1
@@ -345,54 +320,37 @@ local function displayBillboardEffect()
     -- Tweens for the effects
     tweenProperty(Aztech, {BackgroundTransparency = 0, Position = UDim2.new(0.6, 0, 0.4, 0)}, fadeInDuration)
     tweenProperty(idk2, {TextTransparency = 0}, fadeInDuration)
-    task.wait(0.3)
-    tweenProperty(AztechTeam, {BackgroundTransparency = 0, Position = UDim2.new(0.35, 0, 0.5, 0)}, fadeInDuration)
-    tweenProperty(idk, {TextTransparency = 0}, fadeInDuration)
     task.wait(waitTime)
     tweenProperty(Aztech, {BackgroundTransparency = 1}, fadeOutDuration)
     tweenProperty(idk2, {TextTransparency = 1}, fadeOutDuration)
-    tweenProperty(AztechTeam, {BackgroundTransparency = 1}, fadeOutDuration)
-    tweenProperty(idk, {TextTransparency = 1}, fadeOutDuration)
     task.wait(fadeOutDuration)
     birdass:Destroy()
 end
-
--- Connect to animation track
-animator.AnimationPlayed:Connect(function(animationTrack)
-    if animationTrack.Animation.AnimationId == animationId then
-        displayBillboardEffect()
-    end
-end)
-
--- Adding Quote or Message when Animation Starts
-
-local player = game.Players.LocalPlayer
-repeat wait() until player.Character
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
--- Animation ID to detect
-local animationId = "rbxassetid://17120750680" -- Replace with your animation ID
-
--- Messages to send
-local messages = {"To the one who left it all behind-", "And his overwhelming intensity"}
 
 -- Function to send messages
 local function sendMessage(text)
     ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, "All")
 end
 
--- Detect and handle animation playback
+-- Messages to send
+local messages = {"To the one who left it all behind-", "And his overwhelming intensity"}
+
+-- Function triggered when animation plays
 local function onAnimationPlayed(animationTrack)
     if animationTrack.Animation.AnimationId == animationId then
-        -- Send messages as soon as the animation starts
+        -- Display GUI effect
+        displayBillboardEffect()
+
+        -- Send messages
         for _, message in ipairs(messages) do
             sendMessage(message)
-            wait(1.4) -- Delay between messages
+            task.wait(1.4) -- Delay between messages
         end
     end
 end
 
--- Connect to the AnimationPlayed event
-humanoid.Animator.AnimationPlayed:Connect(onAnimationPlayed)
+-- Connect the event only once
+if not humanoid.Animator:FindFirstChild("AnimationPlayedConnection") then
+    local connection = animator.AnimationPlayed:Connect(onAnimationPlayed)
+    connection.Name = "AnimationPlayedConnection"
+end
